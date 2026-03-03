@@ -1,0 +1,953 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>SmartDeviceMatch — Find the Right Device</title>
+
+    <!-- Fonts & Icons -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://kit.fontawesome.com/5d2b8e4b2f.js" crossorigin="anonymous"></script>
+
+    <!-- Page-level styling (embedded for single-file delivery) -->
+    <style>
+        /* -------------------------
+             Variables & Reset
+             ------------------------- */
+        :root{
+            --bg:#0f1724;
+            --card:#0b1220aa;
+            --glass: rgba(255,255,255,0.06);
+            --accent:#7c5cff;
+            --accent-2:#00d4ff;
+            --muted:#98a0b3;
+            --glass-border: rgba(255,255,255,0.06);
+            --success: #10b981;
+            --danger: #ef4444;
+            --radius:14px;
+            --shadow: 0 8px 24px rgba(2,6,23,0.6);
+            --glass-blur:12px;
+        }
+
+        [data-theme="light"]{
+            --bg:#f7f8fb;
+            --card: rgba(255,255,255,0.7);
+            --glass: rgba(255,255,255,0.75);
+            --accent:#5b21b6;
+            --accent-2:#0ea5b7;
+            --muted:#475569;
+            --glass-border: rgba(0,0,0,0.06);
+            --shadow: 0 10px 30px rgba(16,24,40,0.08);
+        }
+
+        *{box-sizing:border-box}
+        html,body{height:100%}
+        body{
+            margin:0;
+            font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,"Helvetica Neue",Arial;
+            background:linear-gradient(180deg, rgba(12,18,28,0.9), rgba(4,6,12,0.95)), url('https://images.unsplash.com/photo-1498050108023-c5249f4df085?q=80&w=1600&auto=format&fit=crop&ixlib=rb-4.0.3&s=966b4a1f1b7e0c5b1e8b3f8b8a6f2b94') center/cover no-repeat;
+            color:#e6eef8;
+            -webkit-font-smoothing:antialiased;
+            -moz-osx-font-smoothing:grayscale;
+            transition:background .4s ease,color .25s ease;
+            padding-bottom:80px;
+        }
+
+        /* -------------------------
+             Layout
+             ------------------------- */
+        .container{
+            max-width:1200px;
+            margin:28px auto;
+            padding:20px;
+        }
+
+        header{
+            display:flex;
+            align-items:center;
+            justify-content:space-between;
+            gap:20px;
+            margin-bottom:18px;
+        }
+
+        .brand{
+            display:flex;
+            align-items:center;
+            gap:12px;
+            cursor:pointer;
+        }
+        .logo{
+            width:48px;height:48px;border-radius:12px;
+            background:linear-gradient(135deg,var(--accent),var(--accent-2));
+            display:grid;place-items:center;color:white;font-weight:800;box-shadow:var(--shadow);
+        }
+        .brand h1{font-size:18px;margin:0}
+        .brand p{font-size:12px;margin:0;color:var(--muted)}
+
+        .controls{
+            display:flex;
+            gap:12px;
+            align-items:center;
+        }
+
+        .btn{
+            display:inline-flex;
+            gap:10px;
+            align-items:center;
+            background:linear-gradient(90deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02));
+            padding:10px 14px;border-radius:10px;border:1px solid var(--glass-border);
+            color:inherit;font-weight:600;cursor:pointer;
+            transition:transform .14s ease, box-shadow .14s ease;
+            backdrop-filter: blur(var(--glass-blur));
+            box-shadow:var(--shadow);
+        }
+        .btn:active{transform:translateY(2px)}
+        .btn.primary{
+            background:linear-gradient(90deg,var(--accent),var(--accent-2));
+            color:white;border:none;
+            box-shadow: 0 8px 30px rgba(124,92,255,0.18);
+        }
+
+        /* -------------------------
+             Hero
+             ------------------------- */
+        .hero{
+            display:grid;
+            grid-template-columns: 1fr 420px;
+            gap:28px;
+            align-items:center;
+            margin-bottom:26px;
+        }
+
+        .hero-card{
+            background:var(--card);
+            border-radius:var(--radius);
+            padding:28px;
+            border:1px solid var(--glass-border);
+            box-shadow:var(--shadow);
+            backdrop-filter: blur(var(--glass-blur));
+        }
+
+        .hero h2{font-size:28px;margin:0 0 8px 0}
+        .hero p{margin:0 0 18px 0;color:var(--muted)}
+
+        .cta-row{display:flex;gap:12px}
+        .hero-visual{
+            height:320px;border-radius:var(--radius);overflow:hidden;
+            display:grid;place-items:center;background:
+            linear-gradient(180deg, rgba(255,255,255,0.03), rgba(0,0,0,0.1));
+            border:1px solid var(--glass-border);
+            box-shadow:var(--shadow);
+            position:relative;
+        }
+
+        .device-mock{
+            width:80%;height:70%;
+            background:linear-gradient(135deg, rgba(255,255,255,0.03), rgba(255,255,255,0.01));
+            border-radius:18px;padding:14px;display:flex;flex-direction:column;gap:10px;
+            transform:rotate(-6deg);
+            transition:transform .6s cubic-bezier(.22,.9,.3,1);
+        }
+        .hero-visual:hover .device-mock{transform:rotate(-2deg) translateY(-6px)}
+        .device-screen{flex:1;border-radius:10px;background:linear-gradient(90deg, rgba(124,92,255,0.18), rgba(0,212,255,0.06));display:grid;place-items:center;color:white;font-weight:700}
+        .device-foot{display:flex;gap:8px;align-items:center;justify-content:space-between;color:var(--muted);font-size:13px}
+
+        /* -------------------------
+             Domain selection grid
+             ------------------------- */
+        .domains{
+            margin-top:18px;display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;
+        }
+        .domain-card{
+            background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+            padding:14px;border-radius:12px;border:1px solid var(--glass-border);cursor:pointer;
+            transition:transform .18s ease, box-shadow .18s ease;
+            display:flex;gap:12px;align-items:flex-start;
+            backdrop-filter: blur(var(--glass-blur));
+        }
+        .domain-card:hover{transform:translateY(-6px);box-shadow:0 12px 40px rgba(2,6,23,0.6)}
+        .domain-icon{width:44px;height:44px;border-radius:10px;background:linear-gradient(135deg,var(--accent),var(--accent-2));display:grid;place-items:center;color:#fff;font-weight:700}
+        .domain-info h4{margin:0;font-size:14px}
+        .domain-info p{margin:4px 0 0 0;font-size:12px;color:var(--muted)}
+
+        /* -------------------------
+             Main content layout
+             ------------------------- */
+        .main{
+            display:grid;
+            grid-template-columns:320px 1fr;
+            gap:18px;
+            margin-top:18px;
+        }
+
+        /* Sidebar filters */
+        .sidebar{
+            background:var(--card);padding:16px;border-radius:12px;border:1px solid var(--glass-border);backdrop-filter: blur(var(--glass-blur));
+            height:fit-content;
+        }
+        .filter-group{margin-bottom:14px}
+        .filter-group h5{margin:0 0 8px 0;font-size:13px}
+        .budget-range{display:flex;gap:8px;align-items:center}
+        .range{
+            width:100%;
+            appearance:none;height:6px;border-radius:6px;background:linear-gradient(90deg,var(--accent),var(--accent-2));
+            outline:none;
+        }
+        .checkbox-list{display:flex;flex-direction:column;gap:8px}
+        .checkbox-list label{display:flex;gap:8px;align-items:center;cursor:pointer;color:var(--muted);font-size:14px}
+        .small{font-size:13px;color:var(--muted)}
+
+        /* Results & Controls */
+        .results-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;gap:8px}
+        .searchbar{flex:1;display:flex;gap:8px;align-items:center}
+        .searchbar input{width:100%;padding:10px;border-radius:12px;border:1px solid var(--glass-border);background:transparent;color:inherit}
+        .tags{display:flex;gap:8px;flex-wrap:wrap}
+
+        /* Device grid */
+        .grid{
+            display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px;
+        }
+        .card{
+            background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+            padding:14px;border-radius:12px;border:1px solid var(--glass-border);
+            transition:transform .16s ease, box-shadow .16s ease;backdrop-filter: blur(var(--glass-blur));
+            display:flex;flex-direction:column;gap:10px;
+        }
+        .card:hover{transform:translateY(-8px);box-shadow:0 20px 50px rgba(2,6,23,0.5)}
+        .card .img{height:150px;border-radius:10px;overflow:hidden;background:#071226;display:grid;place-items:center}
+        .img img{width:100%;height:100%;object-fit:cover;display:block}
+        .meta{display:flex;justify-content:space-between;align-items:center;gap:8px}
+        .price{font-weight:700}
+        .specs{display:flex;gap:8px;flex-wrap:wrap;color:var(--muted);font-size:13px}
+        .tag{padding:6px 8px;border-radius:999px;background:linear-gradient(90deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));font-weight:600;color:var(--muted);font-size:12px}
+        .pros{display:flex;gap:6px;flex-wrap:wrap}
+        .pro{color:var(--success);font-weight:700;font-size:13px}
+        .con{color:var(--danger);font-weight:700;font-size:13px}
+
+        .card-footer{display:flex;align-items:center;justify-content:space-between;gap:8px}
+        .rating{display:flex;gap:6px;align-items:center;color:#ffd166;font-weight:700}
+        .action-row{display:flex;gap:8px}
+
+        .wishlist{background:transparent;border:none;color:var(--muted);cursor:pointer;font-size:18px}
+        .compare-toggle{padding:8px 10px;border-radius:10px;border:1px solid var(--glass-border);background:transparent;color:inherit;cursor:pointer}
+
+        /* Comparison modal */
+        .modal{
+            position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:linear-gradient(0deg, rgba(2,6,23,0.7), rgba(2,6,23,0.7));
+            z-index:80;padding:20px;
+        }
+        .modal.open{display:flex}
+        .modal-card{width:100%;max-width:1100px;background:var(--card);padding:18px;border-radius:12px;border:1px solid var(--glass-border);box-shadow:var(--shadow);backdrop-filter: blur(var(--glass-blur))}
+        .compare-table{overflow:auto}
+        table{width:100%;border-collapse:collapse;color:inherit}
+        th,td{padding:10px;border-bottom:1px dashed rgba(255,255,255,0.03);text-align:left}
+        th{background:linear-gradient(90deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));position:sticky;top:0}
+
+        /* Accordion educational */
+        .accordion{background:var(--card);padding:12px;border-radius:12px;border:1px solid var(--glass-border)}
+        .acc-item{border-top:1px solid rgba(255,255,255,0.02);padding:10px 0}
+        .acc-item:first-child{border-top:none}
+        .acc-question{display:flex;justify-content:space-between;cursor:pointer;font-weight:700}
+        .acc-answer{max-height:0;overflow:hidden;transition:max-height .28s ease;padding-top:0}
+
+        /* Floating help & footer */
+        .fab{
+            position:fixed;right:20px;bottom:20px;width:56px;height:56px;border-radius:999px;background:linear-gradient(135deg,var(--accent),var(--accent-2));display:grid;place-items:center;color:white;z-index:80;box-shadow:0 12px 40px rgba(2,6,23,0.4);cursor:pointer
+        }
+
+        footer{
+            margin-top:34px;color:var(--muted);display:flex;align-items:center;justify-content:space-between;gap:10px;padding-top:20px;border-top:1px solid rgba(255,255,255,0.02)
+        }
+
+        /* Responsive */
+        @media (max-width:1000px){
+            .hero{grid-template-columns:1fr}
+            .main{grid-template-columns:1fr}
+            .hero-visual{height:240px}
+        }
+        @media (max-width:640px){
+            header{flex-direction:column;align-items:flex-start;gap:12px}
+            .brand h1{font-size:16px}
+            .device-mock{transform:none}
+            body{padding-bottom:120px}
+        }
+    </style>
+</head>
+<body data-theme="dark">
+    <div class="container">
+        <!-- Header -->
+        <header>
+            <div class="brand" onclick="resetView()">
+                <div class="logo">SD</div>
+                <div>
+                    <h1>SmartDeviceMatch</h1>
+                    <p>Find the right device for your life</p>
+                </div>
+            </div>
+
+            <div class="controls">
+                <button class="btn" id="themeToggle" title="Toggle theme"><i class="fas fa-moon"></i></button>
+                <button class="btn" id="openQuiz"><i class="fas fa-question-circle"></i> Quiz</button>
+                <button class="btn primary" id="ctaExplore"><i class="fas fa-search"></i> Explore Devices</button>
+            </div>
+        </header>
+
+        <!-- Hero -->
+        <section class="hero">
+            <div class="hero-card">
+                <h2>Stop guessing. Buy smart.</h2>
+                <p>We recommend the right laptops, tablets, monitors and accessories based on what you actually do — school, creative work, gaming, and more.</p>
+                <div class="cta-row">
+                    <button class="btn primary" id="startSelector"><i class="fas fa-chart-line"></i> Get Recommendations</button>
+                    <button class="btn" id="openEducation"><i class="fas fa-book-open"></i> Learn to Choose</button>
+                </div>
+
+                <!-- Domain selection -->
+                <div class="domains" id="domainGrid" aria-label="Domain selection"></div>
+            </div>
+
+            <div class="hero-visual">
+                <div class="device-mock" aria-hidden>
+                    <div class="device-screen">SmartDeviceMatch</div>
+                    <div class="device-foot">
+                        <div class="small">Premium suggestions · fast</div>
+                        <div class="small">AI-rule engine</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Main Content -->
+        <div class="main">
+            <!-- Sidebar filters -->
+            <aside class="sidebar">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+                    <h4 style="margin:0">Filters</h4>
+                    <small class="small" id="matchingCount">0 results</small>
+                </div>
+
+                <div class="filter-group">
+                    <h5>Budget ($)</h5>
+                    <div style="display:flex;gap:8px;align-items:center">
+                        <input type="number" id="minBudget" value="300" style="width:100px;padding:8px;border-radius:8px;border:1px solid var(--glass-border);background:transparent;color:inherit">
+                        <input type="number" id="maxBudget" value="2500" style="width:100px;padding:8px;border-radius:8px;border:1px solid var(--glass-border);background:transparent;color:inherit">
+                    </div>
+                    <div style="margin-top:8px" class="small">Use numbers for quick filtering</div>
+                </div>
+
+                <div class="filter-group">
+                    <h5>Brand</h5>
+                    <div class="checkbox-list" id="brandList"></div>
+                </div>
+
+                <div class="filter-group">
+                    <h5>Performance Level</h5>
+                    <div class="checkbox-list" id="perfList">
+                        <label><input type="checkbox" value="Basic"> Basic</label>
+                        <label><input type="checkbox" value="Mid"> Mid</label>
+                        <label><input type="checkbox" value="High"> High</label>
+                    </div>
+                </div>
+
+                <div class="filter-group">
+                    <h5>Preferences</h5>
+                    <div class="checkbox-list">
+                        <label><input type="checkbox" id="filterBattery"> Long battery life</label>
+                        <label><input type="checkbox" id="filterPortable"> Highly portable</label>
+                    </div>
+                </div>
+
+                <div style="display:flex;gap:8px;margin-top:8px">
+                    <button class="btn primary" id="applyFilters">Apply</button>
+                    <button class="btn" id="resetFilters">Reset</button>
+                </div>
+            </aside>
+
+            <!-- Results -->
+            <main>
+                <div class="results-header">
+                    <div class="searchbar">
+                        <input id="searchInput" placeholder="Search devices, specs, brands..." />
+                        <div class="tags">
+                            <span class="tag">Live results</span>
+                            <span class="tag" id="selectedDomainTag">All domains</span>
+                        </div>
+                    </div>
+                    <div style="display:flex;gap:8px;align-items:center">
+                        <button class="btn" id="openCompare"><i class="fas fa-columns"></i> Compare (<span id="cmpCount">0</span>)</button>
+                        <button class="btn" id="openWishlist"><i class="fas fa-heart"></i> Wishlist</button>
+                    </div>
+                </div>
+
+                <div class="grid" id="deviceGrid" aria-live="polite"></div>
+
+                <!-- Educational Section -->
+                <section style="margin-top:18px">
+                    <div class="accordion" id="education">
+                        <h4 style="margin:0 0 8px 0">How to Choose the Right Laptop</h4>
+                        <div class="acc-item">
+                            <div class="acc-question">RAM <i class="fas fa-chevron-down"></i></div>
+                            <div class="acc-answer"><p style="margin:6px 0 0 0" class="small">More RAM allows smoother multitasking. 8GB is minimal for students, 16GB recommended for heavy multitaskers and content creators.</p></div>
+                        </div>
+                        <div class="acc-item">
+                            <div class="acc-question">SSD vs HDD <i class="fas fa-chevron-down"></i></div>
+                            <div class="acc-answer"><p class="small">SSD is much faster and more reliable. Prefer NVMe SSDs for snappy performance.</p></div>
+                        </div>
+                        <div class="acc-item">
+                            <div class="acc-question">GPU (Graphics)</div>
+                            <div class="acc-answer"><p class="small">Discrete GPUs are important for gaming and creative apps like Premiere / Blender. Integrated GPUs suffice for office and school tasks.</p></div>
+                        </div>
+                        <div class="acc-item">
+                            <div class="acc-question">Processor types</div>
+                            <div class="acc-answer"><p class="small">Modern Intel/AMD CPUs: prioritize higher single-core speeds for everyday use; multi-core for heavy rendering. Apple M-series balances both with efficiency.</p></div>
+                        </div>
+                    </div>
+                </section>
+            </main>
+        </div>
+
+        <footer>
+            <div>
+                <strong>SmartDeviceMatch</strong> — Premium device recommendations & guides
+                <div class="small">© 2026 SmartDeviceMatch • <a href="#" style="color:var(--muted);text-decoration:none">Disclaimer</a></div>
+            </div>
+            <div style="display:flex;gap:12px;align-items:center">
+                <a href="#" class="small" style="color:var(--muted)"><i class="fab fa-twitter"></i></a>
+                <a href="#" class="small" style="color:var(--muted)"><i class="fab fa-linkedin"></i></a>
+                <a href="#" class="small" style="color:var(--muted)"><i class="fab fa-github"></i></a>
+            </div>
+        </footer>
+    </div>
+
+    <!-- Floating Action Button -->
+    <div class="fab" id="helpFab" title="Get help">
+        <i class="fas fa-headset"></i>
+    </div>
+
+    <!-- Compare Modal -->
+    <div class="modal" id="compareModal" role="dialog" aria-modal="true" aria-hidden="true">
+        <div class="modal-card" role="document">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+                <h3 style="margin:0">Compare Devices</h3>
+                <div>
+                    <button class="btn" id="closeCompare">Close</button>
+                </div>
+            </div>
+            <div class="compare-table" id="compareTableContainer"></div>
+        </div>
+    </div>
+
+    <!-- Quiz Modal -->
+    <div class="modal" id="quizModal" role="dialog" aria-modal="true" aria-hidden="true">
+        <div class="modal-card" role="document">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+                <h3 style="margin:0">Smart Recommendation Quiz</h3>
+                <div>
+                    <button class="btn" id="closeQuiz">Close</button>
+                </div>
+            </div>
+
+            <div id="quizContent">
+                <div style="display:flex;flex-direction:column;gap:12px">
+                    <label>What's your budget? <input type="range" id="quizBudget" min="200" max="4000" value="1200"></label>
+                    <label>Do you travel often?
+                        <select id="quizTravel">
+                            <option value="no">No</option>
+                            <option value="sometimes">Sometimes</option>
+                            <option value="yes">Yes</option>
+                        </select>
+                    </label>
+                    <label>Heavy software usage? (e.g., video editing)
+                        <select id="quizHeavy">
+                            <option value="no">No</option>
+                            <option value="some">Some</option>
+                            <option value="yes">Yes</option>
+                        </select>
+                    </label>
+                    <label>Gaming?
+                        <select id="quizGame">
+                            <option value="no">No</option>
+                            <option value="casual">Casual</option>
+                            <option value="hardcore">Hardcore</option>
+                        </select>
+                    </label>
+
+                    <div style="display:flex;gap:8px">
+                        <button class="btn primary" id="submitQuiz">Get Suggestions</button>
+                        <button class="btn" id="clearQuiz">Reset</button>
+                    </div>
+                </div>
+
+                <div id="quizResults" style="margin-top:12px"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Minimal scripts (embedded) -->
+    <script>
+        /*****************************************
+         * SmartDeviceMatch - Single-file App
+         * - Device data stored as JSON array
+         * - Rule-based recommendation & filters
+         * - LocalStorage wishlist
+         * - Compare up to 3 devices
+         *****************************************/
+
+        // Mock dataset (optimize image URLs as needed)
+        const devices = [
+            {
+                id: 'd1',
+                name: 'AeroBook S14',
+                brand: 'AeroTech',
+                domains: ['School','College','Office Job','Programming','Business'],
+                price: 799,
+                ram: 8, storage: 512, cpu: 'Intel i5', gpu: 'Intel Iris', battery: 10, portability: 9,
+                perf: 'Mid',
+                img: 'https://images.unsplash.com/photo-1517336714731-489689fd1ca8?q=80&w=1400&auto=format&fit=crop&ixlib=rb-4.0.3&s=cb2806c50f7a0509c2a2a9c2ca6db4d2',
+                pros: ['Lightweight', 'Good battery'],
+                cons: ['Not for heavy gaming'],
+                bestFor: 'Students & Office',
+                rating: 4.4
+            },
+            {
+                id: 'd2',
+                name: 'ProStream 15',
+                brand: 'CoreMax',
+                domains: ['Creative Work','Content Creation','Programming','University'],
+                price: 1799,
+                ram: 32, storage: 1000, cpu: 'Intel i9', gpu: 'NVIDIA RTX 4060', battery: 7, portability: 6,
+                perf: 'High',
+                img: 'https://images.unsplash.com/photo-1518770660439-4636190af475?q=80&w=1400&auto=format&fit=crop&ixlib=rb-4.0.3&s=9b0dbf63b4f6e0ca6cc4b58ffbdf7f82',
+                pros: ['Powerful CPU/GPU', 'Great screen'],
+                cons: ['Heavy', 'Expensive'],
+                bestFor: 'Creators & Developers',
+                rating: 4.7
+            },
+            {
+                id: 'd3',
+                name: 'GameX Ultra 17',
+                brand: 'VoltPlay',
+                domains: ['Gaming','Content Creation'],
+                price: 2199,
+                ram: 32, storage: 2000, cpu: 'Ryzen 9', gpu: 'NVIDIA RTX 4080', battery: 5, portability: 4,
+                perf: 'High',
+                img: 'https://images.unsplash.com/photo-1600180758896-2fb2836ff1a1?q=80&w=1400&auto=format&fit=crop&ixlib=rb-4.0.3&s=2f01f6a7aa9d9182b3f3b3b88de97a7b',
+                pros: ['Top-tier GPU', 'High refresh'],
+                cons: ['Short battery', 'Bulky'],
+                bestFor: 'Gaming & Streamers',
+                rating: 4.6
+            },
+            {
+                id: 'd4',
+                name: 'NoteAir 11',
+                brand: 'FeatherTech',
+                domains: ['School','College','University','Content Creation','Programming'],
+                price: 499,
+                ram: 4, storage: 128, cpu: 'ARM M1-like', gpu: 'Integrated', battery: 12, portability: 10,
+                perf: 'Basic',
+                img: 'https://images.unsplash.com/photo-1527430253228-e93688616381?q=80&w=1400&auto=format&fit=crop&ixlib=rb-4.0.3&s=198e55b281d4674a6a5a7b9b1b4f2cea',
+                pros: ['Very portable', 'Great battery'],
+                cons: ['Limited storage', 'Less power'],
+                bestFor: 'Note taking & light tasks',
+                rating: 4.1
+            },
+            {
+                id: 'd5',
+                name: 'CreatorTab Pro',
+                brand: 'StudioFlow',
+                domains: ['Creative Work','Content Creation','Business'],
+                price: 1299,
+                ram: 16, storage: 512, cpu: 'Apple M2', gpu: 'Integrated', battery: 11, portability: 8,
+                perf: 'Mid',
+                img: 'https://images.unsplash.com/photo-1510557880182-3d4d3c8a6d5e?q=80&w=1400&auto=format&fit=crop&ixlib=rb-4.0.3&s=8c10dd2d3b1a8b4ec2a2f7a2d44d7de2',
+                pros: ['Excellent screen', 'Smooth OS'],
+                cons: ['Limited ports'],
+                bestFor: 'Designers & Creators',
+                rating: 4.5
+            },
+            {
+                id: 'd6',
+                name: 'BizBook 14',
+                brand: 'OfficePro',
+                domains: ['Business','Office Job','Programming'],
+                price: 999,
+                ram: 16, storage: 512, cpu: 'Intel i7', gpu: 'Integrated', battery: 9, portability: 8,
+                perf: 'Mid',
+                img: 'https://images.unsplash.com/photo-1515879218367-8466d910aaa4?q=80&w=1400&auto=format&fit=crop&ixlib=rb-4.0.3&s=18a2d018407f4b9a4d86a1d4f1b2b5d8',
+                pros: ['Business features', 'Good battery'],
+                cons: ['Middling GPU'],
+                bestFor: 'Professionals',
+                rating: 4.2
+            }
+        ];
+
+        // App State
+        const state = {
+            domain: null,
+            filters: {
+                minBudget: 300,
+                maxBudget: 2500,
+                brands: new Set(),
+                perf: new Set(),
+                battery: false,
+                portable: false
+            },
+            compare: new Set(),
+            wishlist: new Set(JSON.parse(localStorage.getItem('sdm_wishlist') || '[]')),
+            search: ''
+        };
+
+        // Cache DOM nodes
+        const domainGrid = document.getElementById('domainGrid');
+        const deviceGrid = document.getElementById('deviceGrid');
+        const brandList = document.getElementById('brandList');
+        const selectedDomainTag = document.getElementById('selectedDomainTag');
+        const matchingCount = document.getElementById('matchingCount');
+        const searchInput = document.getElementById('searchInput');
+        const minBudgetInput = document.getElementById('minBudget');
+        const maxBudgetInput = document.getElementById('maxBudget');
+        const applyFiltersBtn = document.getElementById('applyFilters');
+        const resetFiltersBtn = document.getElementById('resetFilters');
+        const cmpCount = document.getElementById('cmpCount');
+        const compareModal = document.getElementById('compareModal');
+        const compareTableContainer = document.getElementById('compareTableContainer');
+        const openCompare = document.getElementById('openCompare');
+        const closeCompare = document.getElementById('closeCompare');
+        const openQuizBtn = document.getElementById('openQuiz');
+        const quizModal = document.getElementById('quizModal');
+        const closeQuiz = document.getElementById('closeQuiz');
+        const startSelector = document.getElementById('startSelector');
+        const ctaExplore = document.getElementById('ctaExplore');
+        const openEducation = document.getElementById('openEducation');
+        const educationPanel = document.getElementById('education');
+        const wishlistBtn = document.getElementById('openWishlist');
+        const helpFab = document.getElementById('helpFab');
+        const themeToggle = document.getElementById('themeToggle');
+        const deviceGridParent = document.querySelector('main');
+
+        // Initialize brands from dataset
+        const brands = Array.from(new Set(devices.map(d => d.brand))).sort();
+
+        // Build domain cards dynamically from domains across devices
+        function initDomains(){
+            const domainSet = new Set();
+            devices.forEach(d => d.domains.forEach(x => domainSet.add(x)));
+            const domains = Array.from(domainSet).sort();
+            domainGrid.innerHTML = '';
+            domains.forEach(dom => {
+                const el = document.createElement('div');
+                el.className = 'domain-card';
+                el.innerHTML = `
+                    <div class="domain-icon">${dom[0]}</div>
+                    <div class="domain-info">
+                        <h4>${dom}</h4>
+                        <p>Recommended devices for ${dom.toLowerCase()}</p>
+                    </div>
+                `;
+                el.onclick = () => { state.domain = dom; selectedDomainTag.textContent = dom; renderDevices(); scrollToResults(); };
+                domainGrid.appendChild(el);
+            });
+        }
+
+        // Initialize brand checkboxes
+        function initBrands(){
+            brandList.innerHTML = '';
+            brands.forEach(b => {
+                const id = 'brand_' + b.replace(/\s+/g,'');
+                const label = document.createElement('label');
+                label.innerHTML = `<input type="checkbox" value="${b}" id="${id}"> ${b}`;
+                brandList.appendChild(label);
+                label.querySelector('input').addEventListener('change', e => {
+                    if(e.target.checked) state.filters.brands.add(b); else state.filters.brands.delete(b);
+                });
+            });
+        }
+
+        // Render devices based on state & filters
+        function renderDevices(){
+            const minB = Number(minBudgetInput.value) || 0;
+            const maxB = Number(maxBudgetInput.value) || 99999;
+            state.filters.minBudget = minB;
+            state.filters.maxBudget = maxB;
+            state.search = searchInput.value.trim().toLowerCase();
+
+            let results = devices.filter(d => {
+                if(state.domain && !d.domains.includes(state.domain)) return false;
+                if(d.price < state.filters.minBudget || d.price > state.filters.maxBudget) return false;
+                if(state.filters.brands.size && !state.filters.brands.has(d.brand)) return false;
+                if(state.filters.perf.size && !state.filters.perf.has(d.perf)) return false;
+                if(state.filters.battery && d.battery < 9) return false;
+                if(state.filters.portable && d.portability < 7) return false;
+                if(state.search){
+                    const hay = (d.name + ' ' + d.brand + ' ' + d.bestFor + ' ' + (d.domains||[]).join(' ')).toLowerCase();
+                    if(!hay.includes(state.search)) return false;
+                }
+                return true;
+            });
+
+            matchingCount.textContent = `${results.length} results`;
+            deviceGrid.innerHTML = '';
+            results.forEach(d => {
+                const card = document.createElement('div');
+                card.className = 'card';
+                card.innerHTML = `
+                    <div class="img"><img loading="lazy" src="${d.img}" alt="${d.name}"></div>
+                    <div style="display:flex;justify-content:space-between;align-items:start">
+                        <div>
+                            <div style="font-weight:700">${d.name}</div>
+                            <div class="small">${d.brand} • ${d.bestFor}</div>
+                        </div>
+                        <div style="text-align:right">
+                            <div class="price">$${d.price}</div>
+                            <div class="small">Est. price</div>
+                        </div>
+                    </div>
+                    <div class="specs">
+                        <div class="small">RAM: ${d.ram}GB</div>
+                        <div class="small">SSD: ${d.storage}GB</div>
+                        <div class="small">CPU: ${d.cpu}</div>
+                        <div class="small">Battery: ${d.battery}h</div>
+                    </div>
+                    <div style="display:flex;gap:8px;align-items:center;justify-content:space-between">
+                        <div>
+                            <div class="pros">${d.pros.map(p=>`<span class="pro">+ ${p}</span>`).join(' ')}</div>
+                            <div class="cons">${d.cons.map(c=>`<span class="con">- ${c}</span>`).join(' ')}</div>
+                        </div>
+                        <div style="display:flex;flex-direction:column;align-items:end;gap:8px">
+                            <div class="rating"><i class="fas fa-star"></i> ${d.rating}</div>
+                            <div style="display:flex;gap:6px">
+                                <button class="compare-toggle" data-id="${d.id}"><i class="fas fa-balance-scale"></i> Compare</button>
+                                <button class="wishlist" data-id="${d.id}" title="Add to wishlist">${state.wishlist.has(d.id)?'<i class="fas fa-heart"></i>':'<i class="far fa-heart"></i>'}</button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                deviceGrid.appendChild(card);
+
+                // Wire up compare and wishlist buttons
+                card.querySelector('.compare-toggle').addEventListener('click', e => toggleCompare(d.id));
+                card.querySelector('.wishlist').addEventListener('click', e => toggleWishlist(d.id, e.currentTarget));
+            });
+
+            // Update compare count
+            cmpCount.textContent = state.compare.size;
+        }
+
+        // Toggle compare
+        function toggleCompare(id){
+            if(state.compare.has(id)) state.compare.delete(id); else {
+                if(state.compare.size >= 3) {
+                    alert('You can compare up to 3 devices.');
+                    return;
+                }
+                state.compare.add(id);
+            }
+            cmpCount.textContent = state.compare.size;
+        }
+
+        // Show compare modal with table
+        function showCompare(){
+            if(state.compare.size < 2){ alert('Select at least 2 devices to compare.'); return; }
+            const items = devices.filter(d => state.compare.has(d.id));
+            // Build a simple table
+            let html = '<table><thead><tr><th>Spec</th>';
+            items.forEach(i => html += `<th>${i.name}<div class="small">${i.brand}</div></th>`);
+            html += '</tr></thead><tbody>';
+            const rows = [
+                {k:'Price', f:d=>`$${d.price}`},
+                {k:'Rating', f:d=>d.rating},
+                {k:'CPU', f:d=>d.cpu},
+                {k:'GPU', f:d=>d.gpu},
+                {k:'RAM', f:d=>d.ram + 'GB'},
+                {k:'Storage', f:d=>d.storage + 'GB'},
+                {k:'Battery', f:d=>d.battery + 'h'},
+                {k:'Portability', f:d=>d.portability + '/10'},
+                {k:'Pros', f:d=>d.pros.join(', ')},
+                {k:'Cons', f:d=>d.cons.join(', ')}
+            ];
+            rows.forEach(r => {
+                html += `<tr><td><strong>${r.k}</strong></td>`;
+                items.forEach(i => html += `<td>${r.f(i)}</td>`);
+                html += '</tr>';
+            });
+            html += '</tbody></table>';
+            compareTableContainer.innerHTML = html;
+            compareModal.classList.add('open');
+            compareModal.setAttribute('aria-hidden','false');
+        }
+
+        // Wishlist toggle & persist
+        function toggleWishlist(id, btn){
+            if(state.wishlist.has(id)){ state.wishlist.delete(id); } else { state.wishlist.add(id); }
+            localStorage.setItem('sdm_wishlist', JSON.stringify(Array.from(state.wishlist)));
+            renderDevices();
+            // visual microfeedback
+            btn.classList.add('bump');
+            setTimeout(()=>btn.classList.remove('bump'),220);
+        }
+
+        // Render wishlist items in alert (simplified quick UI)
+        function openWishlistView(){
+            const list = devices.filter(d=>state.wishlist.has(d.id));
+            if(!list.length){ alert('Your wishlist is empty. Add devices you like!'); return; }
+            const txt = list.map(d=>`${d.name} — $${d.price}`).join('\n');
+            alert('Wishlist:\n' + txt);
+        }
+
+        // Simple quiz recommendation logic (rule-based)
+        function runQuiz(){
+            const budget = Number(document.getElementById('quizBudget').value);
+            const travel = document.getElementById('quizTravel').value;
+            const heavy = document.getElementById('quizHeavy').value;
+            const game = document.getElementById('quizGame').value;
+
+            // score devices
+            const scored = devices.map(d => {
+                let score = 0;
+                // budget fit
+                if(d.price <= budget) score += 20;
+                const diff = Math.abs(d.price - budget);
+                score -= diff / 200;
+
+                if(travel === 'yes' && d.portability >= 8) score += 10;
+                if(travel === 'sometimes' && d.portability >= 7) score += 6;
+
+                if(heavy === 'yes' && d.perf === 'High') score += 18;
+                if(heavy === 'some' && (d.perf === 'Mid' || d.perf === 'High')) score += 8;
+
+                if(game === 'hardcore' && d.gpu && d.gpu.toLowerCase().includes('rtx')) score += 20;
+                if(game === 'casual' && d.gpu) score += 6;
+
+                // battery preference
+                if(d.battery >= 10) score += 6;
+
+                // domain fit for creators
+                if(game === 'no' && heavy === 'yes' && d.domains.includes('Content Creation')) score += 8;
+
+                return {id:d.id, score, device:d};
+            });
+
+            scored.sort((a,b)=>b.score - a.score);
+            const top = scored.slice(0,3).map(s=>s.device);
+
+            const results = document.getElementById('quizResults');
+            results.innerHTML = `<h4>Top picks</h4><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:8px">${top.map(d=>{
+                return `<div style="background:linear-gradient(90deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));padding:10px;border-radius:10px">
+                    <div style="font-weight:700">${d.name}</div>
+                    <div class="small">${d.brand} • $${d.price}</div>
+                    <div class="small">Rating: ${d.rating}</div>
+                </div>`;
+            }).join('')}</div>`;
+            // Also highlight domain of top result
+            state.domain = top[0].domains[0] || null;
+            if(state.domain) selectedDomainTag.textContent = state.domain;
+            renderDevices();
+        }
+
+        // Education accordion toggles
+        function initAccordion(){
+            educationPanel.querySelectorAll('.acc-item').forEach(it => {
+                const q = it.querySelector('.acc-question');
+                const a = it.querySelector('.acc-answer');
+                q.addEventListener('click', () => {
+                    const open = a.style.maxHeight && a.style.maxHeight !== '0px';
+                    educationPanel.querySelectorAll('.acc-answer').forEach(x => x.style.maxHeight = null);
+                    if(!open){
+                        a.style.maxHeight = (a.scrollHeight + 16) + 'px';
+                    } else a.style.maxHeight = null;
+                });
+            });
+        }
+
+        // Setup event listeners
+        function setupListeners(){
+            applyFiltersBtn.addEventListener('click', renderDevices);
+            resetFiltersBtn.addEventListener('click', () => {
+                minBudgetInput.value = 300; maxBudgetInput.value = 2500;
+                state.filters.brands.clear(); brandList.querySelectorAll('input').forEach(i=>i.checked=false);
+                state.filters.perf.clear(); document.querySelectorAll('#perfList input').forEach(i=>i.checked=false);
+                document.getElementById('filterBattery').checked = false;
+                document.getElementById('filterPortable').checked = false;
+                state.filters.battery = state.filters.portable = false;
+                renderDevices();
+            });
+
+            // performance checkboxes
+            document.querySelectorAll('#perfList input').forEach(i => i.addEventListener('change', e=>{
+                if(e.target.checked) state.filters.perf.add(e.target.value); else state.filters.perf.delete(e.target.value);
+            }));
+
+            document.getElementById('filterBattery').addEventListener('change', e => { state.filters.battery = e.target.checked; });
+            document.getElementById('filterPortable').addEventListener('change', e => { state.filters.portable = e.target.checked; });
+
+            searchInput.addEventListener('input', () => {
+                renderDevices();
+            });
+
+            openCompare.addEventListener('click', showCompare);
+            closeCompare.addEventListener('click', () => { compareModal.classList.remove('open'); compareModal.setAttribute('aria-hidden','true'); });
+
+            openQuizBtn.addEventListener('click', () => { quizModal.classList.add('open'); quizModal.setAttribute('aria-hidden','false'); });
+            closeQuiz.addEventListener('click', () => { quizModal.classList.remove('open'); quizModal.setAttribute('aria-hidden','true'); });
+
+            document.getElementById('submitQuiz').addEventListener('click', runQuiz);
+            document.getElementById('clearQuiz').addEventListener('click', ()=>{ document.getElementById('quizContent').querySelectorAll('input,select').forEach(i=>i.value = i.type === 'range' ? Math.floor((i.max-i.min)/2) : i.options[0].value); document.getElementById('quizResults').innerHTML=''; });
+
+            startSelector.addEventListener('click', () => { document.querySelector('.hero-card').scrollIntoView({behavior:'smooth'}); });
+            ctaExplore.addEventListener('click', () => { window.scrollTo({top: document.body.scrollHeight/4, behavior:'smooth'}); });
+
+            openEducation.addEventListener('click', () => { educationPanel.scrollIntoView({behavior:'smooth'}); });
+
+            wishlistBtn.addEventListener('click', openWishlistView);
+
+            helpFab.addEventListener('click', () => alert('Need help? Try the quiz or filters.'));
+
+            // theme toggle
+            themeToggle.addEventListener('click', () => {
+                const root = document.body;
+                const current = root.getAttribute('data-theme') || 'dark';
+                const next = current === 'dark' ? 'light' : 'dark';
+                root.setAttribute('data-theme', next);
+            });
+
+            // close modal on backdrop click
+            document.querySelectorAll('.modal').forEach(m => m.addEventListener('click', e => { if(e.target === m) { m.classList.remove('open'); m.setAttribute('aria-hidden','true'); } }));
+        }
+
+        // Helper: scroll to results gracefully
+        function scrollToResults(){
+            const el = document.querySelector('.main');
+            if(el) el.scrollIntoView({behavior:'smooth'});
+        }
+
+        // Reset to initial view
+        function resetView(){
+            state.domain = null; selectedDomainTag.textContent = 'All domains';
+            renderDevices();
+            window.scrollTo({top:0,behavior:'smooth'});
+        }
+
+        // On load
+        function boot(){
+            initDomains();
+            initBrands();
+            initAccordion();
+            setupListeners();
+            // initial filter seeds
+            minBudgetInput.value = 300;
+            maxBudgetInput.value = 2500;
+            // restore wishlist icons visually by re-rendering
+            renderDevices();
+        }
+
+        // Kick off
+        boot();
+
+        // Expose for console debugging (optional)
+        window.SDM = { devices, state, renderDevices, toggleCompare, showCompare };
+
+        // Micro-interaction: subtle sound feedback (optional, tiny)
+        // Keep muted/disabled by default to avoid intrusive audio; user can enable via console if desired.
+    </script>
+</body>
+</html></div></section></div>
